@@ -1,27 +1,29 @@
 {
     "MAHIR": {
         "password": "MAHIRJOD",
-        "role": "admin"
+        "role": "admin",
+        "servers": []
     },
-    "NURROSUL_CODEX69838": {
-        "password": "wLJMWdusjc",
+    "Mm": {
+        "password": "Hhh",
         "role": "user",
         "servers": [
             {
-                "server_id": "429eddad",
-                "login_url": "/429eddad/login",
-                "dashboard_url": "/429eddad/home",
-                "full_link": "https://codex-hosting-y49a.onrender.com/429eddad/login",
+                "server_id": "20cc5a2f",
+                "link": "20cc5a2f",
+                "login_url": "/20cc5a2f/login",
+                "dashboard_url": "/20cc5a2f/home",
+                "full_link": "http://localhost:8080/20cc5a2f/home",
                 "type": "python",
-                "ram": "1GB",
+                "ram": "512MB",
                 "disk": "1GB",
                 "status": "stopped",
                 "pid": null,
-                "created": "2026-06-19 10:58:22.558914",
-                "expiry": "2026-06-22 10:58:22.558593",
+                "created": "2026-06-29 02:09:43.742731",
+                "expiry": "2026-07-29 02:09:43.709728",
                 "main_file": "main.py",
                 "requirements_file": "requirements.txt",
-                "cpu_limit": 30,
+                "cpu_limit": 80,
                 "rate_limit_exceeded": false,
                 "stopped_by_user": false
             }

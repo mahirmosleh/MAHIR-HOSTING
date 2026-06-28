@@ -1,0 +1,30 @@
+{
+    "MAHIR": {
+        "password": "MAHIRJOD",
+        "role": "admin"
+    },
+    "NURROSUL_CODEX69838": {
+        "password": "wLJMWdusjc",
+        "role": "user",
+        "servers": [
+            {
+                "server_id": "429eddad",
+                "login_url": "/429eddad/login",
+                "dashboard_url": "/429eddad/home",
+                "full_link": "https://codex-hosting-y49a.onrender.com/429eddad/login",
+                "type": "python",
+                "ram": "1GB",
+                "disk": "1GB",
+                "status": "stopped",
+                "pid": null,
+                "created": "2026-06-19 10:58:22.558914",
+                "expiry": "2026-06-22 10:58:22.558593",
+                "main_file": "main.py",
+                "requirements_file": "requirements.txt",
+                "cpu_limit": 30,
+                "rate_limit_exceeded": false,
+                "stopped_by_user": false
+            }
+        ]
+    }
+}

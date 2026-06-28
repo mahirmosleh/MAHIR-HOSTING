@@ -496,10 +496,35 @@ def login():
         username = request.form.get('username', '')
         password = request.form.get('password', '')
         users = load_users()
-        if username == 'admin' and password == users.get('admin', {}).get('password'):
-            session['user'] = 'admin'
+        
+        # MAHIR অ্যাডমিন চেক
+        if username == 'MAHIR' and password == 'MAHIRJOD':
+            # নিশ্চিত করুন MAHIR ইউজার আছে
+            if 'MAHIR' not in users:
+                users['MAHIR'] = {'password': 'MAHIRJOD', 'role': 'admin'}
+                save_users(users)
+            session['user'] = 'MAHIR'
             session['role'] = 'admin'
             return redirect(url_for('admin_dashboard'))
+        
+        # অন্য অ্যাডমিন চেক (যদি থাকে)
+        if username in users and users[username].get('role') == 'admin':
+            if users[username].get('password') == password:
+                session['user'] = username
+                session['role'] = 'admin'
+                return redirect(url_for('admin_dashboard'))
+        
+        # ইউজার চেক
+        for user, data in users.items():
+            if data.get('role') == 'user':
+                if username == user and password == data.get('password'):
+                    servers = data.get('servers', [])
+                    if servers:
+                        session['user'] = user
+                        session['role'] = 'user'
+                        session['current_server_id'] = servers[0].get('server_id')
+                        return redirect(url_for('server_home', server_id=servers[0].get('server_id')))
+        
         return render_template('login.html', error="Invalid credentials!")
     return render_template('login.html', error=None)
 

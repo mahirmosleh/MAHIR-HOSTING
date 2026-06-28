@@ -606,21 +606,61 @@ def create_server():
         return jsonify({'error': 'Unauthorized'}), 403
     
     data = request.get_json()
-    print("📥 Received data:", data)  # 👈 ডিবাগ লাইন
+    print("📥 Received data:", data)
     
-    username = data.get('username', '')
-    password = data.get('password', '')
+    if not data:
+        return jsonify({'error': 'No JSON data received!'}), 400
+    
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
     server_type = data.get('server_type', 'python')
-    ram = data.get('ram', '512MB')
-    disk = data.get('disk', '1GB')
-    expiry_days = int(data.get('expiry_days', 30))
-    cpu_limit = int(data.get('cpu_limit', 80))
     
-    if not username or not password:
-        return jsonify({'error': 'Required!'}), 400
+    # ✅ RAM এবং Disk - যেকোনো মান নিতে পারবে
+    ram = data.get('ram', '512MB').strip()
+    disk = data.get('disk', '1GB').strip()
+    
+    # ✅ শুধু ভ্যালিডেশন: খালি না হলে
+    if not ram:
+        ram = '512MB'
+    if not disk:
+        disk = '1GB'
+    
+    # ✅ expiry_days এবং cpu_limit ভ্যালিডেশন
+    try:
+        expiry_days = int(data.get('expiry_days', 30))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid expiry_days value!'}), 400
+    
+    try:
+        cpu_limit = int(data.get('cpu_limit', 80))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid cpu_limit value!'}), 400
+    
+    # ✅ ভ্যালিডেশন (শুধু সীমার মধ্যে রাখুন)
+    if expiry_days < 1 or expiry_days > 365:
+        return jsonify({'error': 'Expiry days must be between 1 and 365!'}), 400
+    
+    if cpu_limit < 10 or cpu_limit > 100:
+        return jsonify({'error': 'CPU limit must be between 10 and 100!'}), 400
+    
+    if not username:
+        return jsonify({'error': 'Username is required!'}), 400
+    
+    if not password:
+        return jsonify({'error': 'Password is required!'}), 400
+    
+    if len(username) < 3:
+        return jsonify({'error': 'Username must be at least 3 characters!'}), 400
+    
+    if len(password) < 4:
+        return jsonify({'error': 'Password must be at least 4 characters!'}), 400
     
     users = load_users()
-    print("👤 Users before:", users.keys())  # 👈 ডিবাগ লাইন
+    print("👤 Users before:", list(users.keys()))
+    
+    # ✅ চেক করুন ইউজার আগে থেকে আছে কিনা
+    if username in users:
+        return jsonify({'error': f'Username "{username}" already exists!'}), 400
     
     server_id = str(uuid.uuid4())[:8]
     expiry_date = datetime.now() + timedelta(days=expiry_days)
@@ -628,31 +668,43 @@ def create_server():
     create_default_files(get_server_dir(server_id))
     
     new_server = {
-        'server_id': server_id, 'link': server_id,
+        'server_id': server_id,
+        'link': server_id,
         'login_url': f"/{server_id}/login",
         'dashboard_url': f"/{server_id}/home",
         'full_link': request.host_url.rstrip('/') + f"/{server_id}/home",
-        'type': server_type, 'ram': ram, 'disk': disk,
-        'status': 'stopped', 'pid': None,
-        'created': str(datetime.now()), 'expiry': str(expiry_date),
-        'main_file': 'main.py', 'requirements_file': 'requirements.txt',
-        'cpu_limit': cpu_limit, 'rate_limit_exceeded': False, 'stopped_by_user': False
+        'type': server_type,
+        'ram': ram,          # ✅ ইউজার যা চায় তাই
+        'disk': disk,        # ✅ ইউজার যা চায় তাই
+        'status': 'stopped',
+        'pid': None,
+        'created': str(datetime.now()),
+        'expiry': str(expiry_date),
+        'main_file': 'main.py',
+        'requirements_file': 'requirements.txt',
+        'cpu_limit': cpu_limit,
+        'rate_limit_exceeded': False,
+        'stopped_by_user': False
     }
     
-    if username not in users:
-        users[username] = {'password': password, 'role': 'user', 'servers': []}
-    else:
-        if 'servers' not in users[username]:
-            users[username]['servers'] = []
+    users[username] = {
+        'password': password,
+        'role': 'user',
+        'servers': [new_server]
+    }
     
-    users[username]['servers'].append(new_server)
-    print(f"✅ Server added to {username}:", users[username]['servers'])  # 👈 ডিবাগ লাইন
-    
-    save_users(users)
-    print("💾 Users after save:", users.keys())  # 👈 ডিবাগ লাইন
+    try:
+        save_users(users)
+        print("✅ File saved successfully!")
+        print("💾 Users after save:", list(users.keys()))
+    except Exception as e:
+        print(f"❌ Error saving file: {e}")
+        return jsonify({'error': f'File save error: {str(e)}'}), 500
     
     return jsonify({
-        'success': True, 'username': username, 'password': password,
+        'success': True,
+        'username': username,
+        'password': password,
         'login_url': new_server['login_url'],
         'hostname': new_server['full_link'],
         'server_id': server_id

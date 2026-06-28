@@ -115,7 +115,6 @@
             </h2>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="createForm">
-                <!-- Basic Info -->
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Username *</label>
                     <input type="text" id="newUsername" placeholder="Enter username" 
@@ -136,7 +135,6 @@
                     </select>
                 </div>
                 
-                <!-- Resources -->
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">RAM</label>
                     <select id="ram" 
@@ -166,7 +164,6 @@
                         class="w-full bg-[#0c0e14] border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 outline-none transition">
                 </div>
 
-                <!-- CPU Rate Limit -->
                 <div class="md:col-span-3">
                     <label class="block text-xs text-gray-500 mb-2 flex items-center gap-2">
                         <i class="fas fa-tachometer-alt text-blue-400"></i> 
@@ -182,34 +179,7 @@
                             <button onclick="setQuickCPU(100)" class="bg-red-600/20 hover:bg-red-600 px-2 py-1 rounded text-xs text-red-400 transition">100%</button>
                         </div>
                     </div>
-                    <p class="text-gray-600 text-xs mt-2">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Server will auto-stop if CPU usage exceeds this limit (10-second average)
-                    </p>
                 </div>
-            </div>
-
-            <!-- Quick Template Buttons -->
-            <div class="mt-5 flex flex-wrap gap-2">
-                <span class="text-xs text-gray-500 flex items-center mr-2">
-                    <i class="fas fa-bolt mr-1"></i> Quick Templates:
-                </span>
-                <button onclick="quickTemplate('discord')" 
-                    class="bg-indigo-600/20 hover:bg-indigo-600/40 px-3 py-1.5 rounded-lg text-xs transition border border-indigo-500/30">
-                    🤖 Discord Bot
-                </button>
-                <button onclick="quickTemplate('telegram')" 
-                    class="bg-blue-600/20 hover:bg-blue-600/40 px-3 py-1.5 rounded-lg text-xs transition border border-blue-500/30">
-                    📨 Telegram Bot
-                </button>
-                <button onclick="quickTemplate('flask')" 
-                    class="bg-green-600/20 hover:bg-green-600/40 px-3 py-1.5 rounded-lg text-xs transition border border-green-500/30">
-                    🌐 Flask App
-                </button>
-                <button onclick="quickTemplate('node')" 
-                    class="bg-yellow-600/20 hover:bg-yellow-600/40 px-3 py-1.5 rounded-lg text-xs transition border border-yellow-500/30">
-                    💚 Node.js App
-                </button>
             </div>
 
             <button onclick="createServer()" 
@@ -257,7 +227,6 @@
                         {% for user in users %}
                             {% for server in user.servers %}
                             <tr class="border-b border-gray-800 hover:bg-[#1a1d27] transition">
-                                <!-- User Info -->
                                 <td class="p-4">
                                     <div class="flex items-center gap-2">
                                         <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
@@ -267,7 +236,6 @@
                                     </div>
                                 </td>
                                 
-                                <!-- Password -->
                                 <td class="p-4">
                                     <div class="flex items-center gap-2">
                                         <span class="text-gray-400 text-sm font-mono" id="pass-{{ server.server_id }}">••••••••</span>
@@ -278,7 +246,6 @@
                                     </div>
                                 </td>
                                 
-                                <!-- Server Link -->
                                 <td class="p-4">
                                     <a href="{{ server.login_url }}" target="_blank" 
                                         class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
@@ -287,7 +254,6 @@
                                     </a>
                                 </td>
                                 
-                                <!-- Config -->
                                 <td class="p-4 text-xs">
                                     <span class="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">{{ server.type }}</span>
                                     <span class="text-gray-500 mx-1">|</span>
@@ -296,7 +262,6 @@
                                     <span class="text-gray-400">{{ server.disk }}</span>
                                 </td>
                                 
-                                <!-- CPU Limit -->
                                 <td class="p-4">
                                     <div class="flex items-center gap-2">
                                         <div class="w-16 bg-gray-800 rounded-full h-2 overflow-hidden">
@@ -315,14 +280,9 @@
                                             {% else %}text-red-400{% endif %}">
                                             {{ server.cpu_limit | default(80) }}%
                                         </span>
-                                        <button onclick="changeCPULimit('{{ server.server_id }}', {{ server.cpu_limit | default(80) }})" 
-                                            class="text-gray-500 hover:text-blue-400 text-xs" title="Change CPU Limit">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
                                     </div>
                                 </td>
                                 
-                                <!-- Status -->
                                 <td class="p-4">
                                     {% if server.rate_limit_exceeded %}
                                     <span class="px-2 py-1 rounded-full text-xs bg-orange-500/20 text-orange-400 flex items-center gap-1 w-fit">
@@ -339,7 +299,6 @@
                                     {% endif %}
                                 </td>
                                 
-                                <!-- Expiry -->
                                 <td class="p-4">
                                     <span class="text-yellow-400 text-xs">
                                         <i class="far fa-calendar-alt mr-1"></i>
@@ -347,7 +306,6 @@
                                     </span>
                                 </td>
                                 
-                                <!-- Actions -->
                                 <td class="p-4">
                                     <div class="flex gap-2">
                                         <button onclick="changeCPULimit('{{ server.server_id }}', {{ server.cpu_limit | default(80) }})" 
@@ -372,53 +330,11 @@
     </div>
 
     <script>
-        // Quick CPU Preset
         function setQuickCPU(value) {
             document.getElementById('cpuLimit').value = value;
             document.getElementById('cpuLimitValue').innerText = value + '%';
         }
 
-        // Quick Template
-        function quickTemplate(type) {
-            document.getElementById('serverType').value = 'python';
-            
-            if (type === 'discord') {
-                document.getElementById('newUsername').value = 'discord_bot_' + Math.random().toString(36).substr(2, 4);
-                document.getElementById('ram').value = '256MB';
-                document.getElementById('cpuLimit').value = 50;
-                document.getElementById('cpuLimitValue').innerText = '50%';
-            } else if (type === 'telegram') {
-                document.getElementById('newUsername').value = 'telegram_bot_' + Math.random().toString(36).substr(2, 4);
-                document.getElementById('ram').value = '128MB';
-                document.getElementById('cpuLimit').value = 30;
-                document.getElementById('cpuLimitValue').innerText = '30%';
-            } else if (type === 'flask') {
-                document.getElementById('newUsername').value = 'flask_app_' + Math.random().toString(36).substr(2, 4);
-                document.getElementById('ram').value = '512MB';
-                document.getElementById('cpuLimit').value = 80;
-                document.getElementById('cpuLimitValue').innerText = '80%';
-            } else if (type === 'node') {
-                document.getElementById('serverType').value = 'node';
-                document.getElementById('newUsername').value = 'node_app_' + Math.random().toString(36).substr(2, 4);
-                document.getElementById('ram').value = '256MB';
-                document.getElementById('cpuLimit').value = 60;
-                document.getElementById('cpuLimitValue').innerText = '60%';
-            }
-            
-            document.getElementById('newPassword').value = generatePassword();
-        }
-
-        // Generate Random Password
-        function generatePassword() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let password = '';
-            for (let i = 0; i < 12; i++) {
-                password += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return password;
-        }
-
-        // Toggle Password
         function togglePassword(serverId, password) {
             const passElement = document.getElementById('pass-' + serverId);
             if (passElement.innerText === '••••••••') {
@@ -428,30 +344,23 @@
             }
         }
 
-        // Change CPU Limit
         function changeCPULimit(serverId, currentLimit) {
             Swal.fire({
                 title: 'Change CPU Rate Limit',
                 text: `Current limit: ${currentLimit}%`,
                 input: 'range',
-                inputAttributes: {
-                    min: '10',
-                    max: '100',
-                    step: '5'
-                },
+                inputAttributes: { min: '10', max: '100', step: '5' },
                 inputValue: currentLimit,
                 background: '#12141c',
                 color: '#fff',
                 confirmButtonColor: '#3b82f6',
                 showCancelButton: true,
-                inputValue: currentLimit,
                 didOpen: () => {
                     const range = Swal.getInput();
                     const valueDisplay = document.createElement('span');
                     valueDisplay.style.cssText = 'display:block;text-align:center;font-size:2em;font-weight:bold;color:#3b82f6;margin-top:10px;';
                     valueDisplay.textContent = range.value + '%';
                     range.parentNode.insertBefore(valueDisplay, range.nextSibling);
-                    
                     range.addEventListener('input', () => {
                         valueDisplay.textContent = range.value + '%';
                     });
@@ -483,7 +392,6 @@
             });
         }
 
-        // Create Server
         function createServer() {
             const data = {
                 username: document.getElementById('newUsername').value.trim(),
@@ -506,24 +414,11 @@
                 return;
             }
             
-            if (data.cpu_limit < 10 || data.cpu_limit > 100) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'CPU limit must be between 10% and 100%!',
-                    icon: 'error',
-                    background: '#12141c',
-                    color: '#fff'
-                });
-                return;
-            }
-            
             Swal.fire({
                 title: 'Creating Server...',
                 html: 'Please wait...',
                 allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                },
+                didOpen: () => { Swal.showLoading(); },
                 background: '#12141c',
                 color: '#fff'
             });
@@ -544,7 +439,6 @@
                                 <p><strong>Password:</strong> ${data.password}</p>
                                 <p><strong>CPU Limit:</strong> ${data.cpu_limit || '80'}%</p>
                                 <p><strong>Login URL:</strong> <a href="${data.login_url}" target="_blank" class="text-blue-400">${data.login_url}</a></p>
-                                <p><strong>Host:</strong> ${data.hostname}</p>
                             </div>
                         `,
                         icon: 'success',
@@ -552,13 +446,8 @@
                         color: '#fff',
                         confirmButtonColor: '#3b82f6'
                     });
-                    
-                    // Clear form
                     document.getElementById('newUsername').value = '';
                     document.getElementById('newPassword').value = '';
-                    document.getElementById('cpuLimit').value = 80;
-                    document.getElementById('cpuLimitValue').innerText = '80%';
-                    
                     setTimeout(() => location.reload(), 3000);
                 } else {
                     Swal.fire('Error', data.error || 'Something went wrong', 'error');
@@ -569,7 +458,6 @@
             });
         }
         
-        // Delete Server
         function deleteServer(username, serverId) {
             Swal.fire({
                 title: 'Delete Server?',
@@ -602,23 +490,6 @@
                 }
             });
         }
-
-        // Auto refresh stats
-        function refreshStats() {
-            location.reload();
-        }
-        
-        // Shortcut keys
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'r') {
-                e.preventDefault();
-                location.reload();
-            }
-            if (e.ctrlKey && e.key === 'n') {
-                e.preventDefault();
-                document.getElementById('newUsername').focus();
-            }
-        });
     </script>
 </body>
 </html>

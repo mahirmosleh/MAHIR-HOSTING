@@ -438,7 +438,23 @@ def api_create_server():
     if username in users:
         return jsonify({'status': 'error', 'message': f"Username '{username}' already exists!"}), 400
     
-    server_id = str(uuid.uuid4())[:8]
+    # ✅ শুধু নাম্বার দিয়ে ইউনিক ID জেনারেট করুন
+    def generate_unique_id():
+        while True:
+            server_id = str(random.randint(100000, 999999))
+            exists = False
+            for uname, data in users.items():
+                if uname == 'admin': continue
+                servers = data.get('servers', [])
+                for s in servers:
+                    if s.get('server_id') == server_id:
+                        exists = True
+                        break
+                if exists: break
+            if not exists:
+                return server_id
+    
+    server_id = generate_unique_id()
     expiry_date = datetime.now() + timedelta(days=days)
     
     create_default_files(get_server_dir(server_id))
@@ -446,12 +462,12 @@ def api_create_server():
     host = request.host
     is_local = host.startswith('localhost') or host.startswith('127.0.0.1') or host.startswith('192.168')
     scheme = 'http' if is_local else 'https'
-    full_url = f"{scheme}://{host}/{server_id}/login"
+    full_url = f"{scheme}://{host}/{server_id}"
     
     new_server = {
         'server_id': server_id,
-        'login_url': f"/{server_id}/login",
-        'dashboard_url': f"/{server_id}/home",
+        'login_url': f"/{server_id}",
+        'dashboard_url': f"/{server_id}/dashboard",
         'full_link': full_url,
         'type': server_type,
         'ram': ram, 'disk': disk,
@@ -521,44 +537,58 @@ def login():
                     session['user'] = username
                     session['role'] = 'user'
                     session['current_server_id'] = servers[0].get('server_id')
-                    return redirect(url_for('server_home', server_id=servers[0].get('server_id')))
+                    return redirect(url_for('server_dashboard', server_id=servers[0].get('server_id')))
         
         return render_template('login.html', error="Invalid credentials!")
     return render_template('login.html', error=None)
 
-@app.route('/<server_id>/login', methods=['GET', 'POST'])
-def server_login(server_id):
+@app.route('/<server_id>')
+def server_main(server_id):
+    """শুধু নাম্বার দিয়ে অ্যাক্সেস - লগইন পেজ দেখাবে"""
     valid, result = check_server_valid(server_id)
     if not valid:
         return render_template('error.html', error_type=result if result else "deleted", server_link=server_id)
     
-    if request.method == 'POST':
-        username = request.form.get('username', '')
-        password = request.form.get('password', '')
-        users = load_users()
-        for uname, data in users.items():
-            if uname == 'admin': continue
-            servers = data.get('servers', [])
-            if not isinstance(servers, list): continue
-            for s in servers:
-                if isinstance(s, dict) and s.get('server_id') == server_id:
-                    if username == uname and password == data.get('password'):
-                        session['user'] = uname
-                        session['role'] = 'user'
-                        session['current_server_id'] = server_id
-                        return redirect(url_for('server_home', server_id=server_id))
-                    else:
-                        return render_template('login.html', error="Invalid credentials!")
-        return render_template('login.html', error="Invalid login!")
-    return render_template('login.html', error=None)
+    # যদি ইউজার ইতিমধ্যে লগইন করা থাকে, তাহলে ড্যাশবোর্ডে পাঠান
+    if 'user' in session and session.get('current_server_id') == server_id:
+        return redirect(url_for('server_dashboard', server_id=server_id))
+    
+    # নাহলে লগইন পেজ দেখান
+    return render_template('login.html', server_id=server_id, error=None)
 
-@app.route('/<server_id>/home')
-def server_home(server_id):
+@app.route('/<server_id>/login', methods=['POST'])
+def server_login_post(server_id):
+    valid, result = check_server_valid(server_id)
+    if not valid:
+        return render_template('error.html', error_type=result if result else "deleted", server_link=server_id)
+    
+    username = request.form.get('username', '')
+    password = request.form.get('password', '')
+    users = load_users()
+    
+    for uname, data in users.items():
+        if uname == 'admin': continue
+        servers = data.get('servers', [])
+        if not isinstance(servers, list): continue
+        for s in servers:
+            if isinstance(s, dict) and s.get('server_id') == server_id:
+                if username == uname and password == data.get('password'):
+                    session['user'] = uname
+                    session['role'] = 'user'
+                    session['current_server_id'] = server_id
+                    return redirect(url_for('server_dashboard', server_id=server_id))
+                else:
+                    return render_template('login.html', server_id=server_id, error="Invalid credentials!")
+    
+    return render_template('login.html', server_id=server_id, error="Invalid login!")
+
+@app.route('/<server_id>/dashboard')
+def server_dashboard(server_id):
     if 'user' not in session or session.get('role') != 'user':
-        return redirect(url_for('server_login', server_id=server_id))
+        return redirect(url_for('server_main', server_id=server_id))
     if session.get('current_server_id') != server_id:
         session.clear()
-        return redirect(url_for('server_login', server_id=server_id))
+        return redirect(url_for('server_main', server_id=server_id))
     
     valid, result = check_server_valid(server_id)
     if not valid:
@@ -567,12 +597,22 @@ def server_home(server_id):
     
     return render_template('home.html', username=session['user'], current_server=result)
 
+@app.route('/<server_id>/login', methods=['GET'])
+def server_login_old(server_id):
+    """পুরনো URL এর জন্য রিডাইরেক্ট"""
+    return redirect(url_for('server_main', server_id=server_id))
+
+@app.route('/<server_id>/home')
+def server_home_old(server_id):
+    """পুরনো home URL কে dashboard এ রিডাইরেক্ট করুন"""
+    return redirect(url_for('server_dashboard', server_id=server_id))
+
 @app.route('/logout')
 def logout():
     server_id = session.get('current_server_id')
     session.clear()
     if server_id:
-        return redirect(url_for('server_login', server_id=server_id))
+        return redirect(url_for('server_main', server_id=server_id))
     return redirect(url_for('login'))
 
 # ============================================
@@ -662,7 +702,23 @@ def create_server():
     if username in users:
         return jsonify({'error': f'Username "{username}" already exists!'}), 400
     
-    server_id = str(uuid.uuid4())[:8]
+    # ✅ শুধু নাম্বার দিয়ে ইউনিক ID জেনারেট করুন
+    def generate_unique_id():
+        while True:
+            server_id = str(random.randint(100000, 999999))
+            exists = False
+            for uname, data in users.items():
+                if uname == 'admin': continue
+                servers = data.get('servers', [])
+                for s in servers:
+                    if s.get('server_id') == server_id:
+                        exists = True
+                        break
+                if exists: break
+            if not exists:
+                return server_id
+    
+    server_id = generate_unique_id()
     expiry_date = datetime.now() + timedelta(days=expiry_days)
     
     create_default_files(get_server_dir(server_id))
@@ -670,12 +726,12 @@ def create_server():
     new_server = {
         'server_id': server_id,
         'link': server_id,
-        'login_url': f"/{server_id}/login",
-        'dashboard_url': f"/{server_id}/home",
-        'full_link': request.host_url.rstrip('/') + f"/{server_id}/home",
+        'login_url': f"/{server_id}",
+        'dashboard_url': f"/{server_id}/dashboard",
+        'full_link': request.host_url.rstrip('/') + f"/{server_id}",
         'type': server_type,
-        'ram': ram,          # ✅ ইউজার যা চায় তাই
-        'disk': disk,        # ✅ ইউজার যা চায় তাই
+        'ram': ram,
+        'disk': disk,
         'status': 'stopped',
         'pid': None,
         'created': str(datetime.now()),
